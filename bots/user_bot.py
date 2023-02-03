@@ -1,5 +1,6 @@
 import discord
 import asyncio
+from datetime import datetime
 
 from utils.user import UserInfo
 
@@ -10,14 +11,20 @@ class UserBot(discord.Client):
         super().__init__(intents=intents)
         self.user_info = UserInfo()
 
+    async def kick_user(self):
+        guild = discord.utils.get(self.guilds, name='Test')
+        for member in guild.members:
+            current_time = datetime.now()
+            join_time = member.joined_at.replace(tzinfo=None)
+            days = (current_time - join_time).days
+            max_days = 0
+            if days >= max_days and 1 == len(member.roles):
+                await member.kick()
+
     async def status_task(self):
         while True:
-            await self.change_presence(status=discord.Status.idle, activity=discord.Game('status1'))
-            await asyncio.sleep(4)
-            await self.change_presence(status=discord.Status.idle, activity=discord.Game('status2'))
-            await asyncio.sleep(4)
-            await self.change_presence(status=discord.Status.idle, activity=discord.Game('status3'))
-            await asyncio.sleep(4)
+            self.kick_user()
+            await asyncio.sleep(60)
 
     async def on_ready(self):
         print(f'{self.user.name} is ready')
