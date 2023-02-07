@@ -17,13 +17,13 @@ class UserBot(discord.Client):
             current_time = datetime.now()
             join_time = member.joined_at.replace(tzinfo=None)
             days = (current_time - join_time).days
-            max_days = 0
+            max_days = 7
             if days >= max_days and 1 == len(member.roles):
                 await member.kick()
 
     async def status_task(self):
         while True:
-            self.kick_user()
+            await self.kick_user()
             await asyncio.sleep(60)
 
     async def on_ready(self):
