@@ -2,6 +2,8 @@ import discord
 import asyncio
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import requests
+from bs4 import BeautifulSoup
 
 class FileBot(discord.Client):
     def __init__(self) -> None:
@@ -10,7 +12,7 @@ class FileBot(discord.Client):
         intents.message_content = True
         super().__init__(intents=intents)
 
-        self.link = 'https://file.kiwi/start.html?ext=new'
+        self.link = 'https://anonfiles.com/'
 
     async def on_ready(self):
         print(f'{self.user.name} is ready')
@@ -20,12 +22,30 @@ class FileBot(discord.Client):
         if message.author == self.user:
             return
 
-        if message.content.startswith('/file'):
-            browser = webdriver.Chrome()
-            browser.get(self.link)
+        if message.content.startswith('/send'):
+            embed = discord.Embed(title=f"아래 링크에 파일을 업로드해주세요 (최대 20GB)",
+                                  description=f"링크: {self.link}\n"
+                                              f"명렁어 '/upload url' 을 통해 파일을 공유해주세요",
+                                  color=0xFF0000)
 
-            while 'new' in browser.current_url:
-                await asyncio.sleep(0.1)
+            await message.delete()
+            await message.channel.send(embed=embed)
 
-            current_link = browser.current_url
-            await message.channel.send(current_link)
+        if message.content.startswith('/upload'):
+            uploaded_link = message.content.replace('/upload', '')
+            file_name = uploaded_link[uploaded_link.rindex('/')+1:]
+
+            response = requests.get(uploaded_link)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            download = str(soup.select('#download-url'))
+            start = download.find('href="')
+            end = download.find('"', start)
+            start = end + 1
+            end = download.find('"', start)
+
+            embed = discord.Embed(title=f"{file_name} 파일의 공유 링크입니다",
+                                  description=f"링크: {download[start:end]}",
+                                  color=0xFF0000)
+
+            await message.delete()
+            await message.channel.send(embed=embed)
