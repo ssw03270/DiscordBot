@@ -18,14 +18,21 @@ class UserBot(discord.Client):
             current_time = datetime.now()
             join_time = member.joined_at.replace(tzinfo=None)
             days = (current_time - join_time).days
+
             max_days = 7
+            warning_days = 6
+
             if days >= max_days and 1 == len(member.roles):
+                self.user_info.drop(member)
                 await member.kick()
+
+            elif days >= warning_days and 1 == len(member.roles):
+                await member.send(f'구성원 인증 가능 시간이 하루 남았습니다. 개인 메시지 목록에서 구성원 인증을 위한 메시지를 확인해주세요.')
 
     async def status_task(self):
         while True:
             await self.kick_user()
-            await asyncio.sleep(60)
+            await asyncio.sleep(86400)
 
     async def on_ready(self):
         print(f'{self.user.name} is ready')
@@ -39,7 +46,7 @@ class UserBot(discord.Client):
         self.user_info.join(name=member)
 
     async def on_member_remove(self, member):
-        pass
+        self.user_info.drop(member)
 
     async def on_message(self, message):
         # message의 주인이 bot인 경우
@@ -48,7 +55,7 @@ class UserBot(discord.Client):
 
         permission = self.user_info.get_info(name=message.author, data_type='permission')
         if permission == 'guest':
-            if "@khu.ac.kr" in message.content:
+            if "@khu.ac.kr" in str(message.content):
                 await message.channel.send(f'{message.content}로 전송된 코드를 입력해주세요 (코드를 받지 못했다면 스팸 메일함을 확인해주세요).')
                 await message.channel.send(f'만약 코드 재전송을 원하신다면 \'재전송\'을 입력해주세요.')
 
@@ -56,12 +63,12 @@ class UserBot(discord.Client):
                 self.user_info.set_info(name=message.author, data_type='random_code', data_content=random_code)
                 self.user_info.set_info(name=message.author, data_type='email', data_content=message.content)
 
-            if "재전송" == message.content:
+            if "재전송" == str(message.content):
                 email = self.user_info.get_info(name=message.author, data_type='email')
                 random_code = self.user_info.send_email(email, 'IIIXR LAB Discord Email Verification', 'IIIXR LAB')
                 self.user_info.set_info(name=message.author, data_type='random_code', data_content=random_code)
 
-            if message.content == self.user_info.get_info(name=message.author, data_type='random_code'):
+            if int(message.content) == int(self.user_info.get_info(name=message.author, data_type='random_code')):
                 await message.channel.send(f'Guest 역할을 지급하였습니다. 환영합니다.')
                 self.user_info.set_info(name=message.author, data_type='permission', data_content='member')
 

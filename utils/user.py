@@ -10,27 +10,33 @@ class UserInfo():
 
     def set_DB(self):
         try:
-            self.DB = pd.read_csv('../db.csv', low_memory=False)
+            self.DB = pd.read_csv('./utils/db.csv', low_memory=False, index_col = 0)
         except:
             self.DB = pd.DataFrame(columns=['name', 'email', 'random_code', 'permission'])
-            self.DB.to_csv('db.csv')
+            self.DB.to_csv('./utils/db.csv')
 
         return self.DB
 
     def join(self, name):
         temp = pd.DataFrame({'name': [name], 'email': [''], 'random_code': [''], 'permission': ['guest']})
-        self.DB = pd.concat([self.DB, temp])
+        self.DB = pd.concat([self.DB, temp], ignore_index=True)
+        self.DB.to_csv('./utils/db.csv')
         print(f'{name} join')
 
+    def drop(self, name):
+        self.DB.drop(self.DB.loc[self.DB['name'] == str(name)].index, inplace=True)
+        self.DB.to_csv('./utils/db.csv')
+
     def set_info(self, name, data_type, data_content):
-        self.DB.loc[self.DB['name'] == name, data_type] = data_content
+        self.DB.loc[self.DB['name'] == str(name), data_type] = data_content
+        self.DB.to_csv('./utils/db.csv')
 
     def get_info(self, name, data_type):
-        length = len(self.DB.loc[self.DB['name'] == name, data_type].values)
+        length = len(self.DB.loc[self.DB['name'] == str(name), data_type].values)
         if length == 0:
             return ''
         else:
-            return self.DB.loc[self.DB['name'] == name, data_type].values[0]
+            return self.DB.loc[self.DB['name'] == str(name), data_type].values[0]
 
     def send_email(self, target, title, name):
         smtp_gmail = smtplib.SMTP('smtp.gmail.com', 587)
