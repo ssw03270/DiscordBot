@@ -66,28 +66,60 @@ class UserBot(discord.Client):
         if message.author == self.user:
             return
 
+        content = str(message.content)
         permission = self.user_info.get_info(name=message.author, data_type='permission')
         if permission == 'guest':
-            if "@khu.ac.kr" in str(message.content):
-                await message.channel.send(f'{message.content}로 전송된 코드를 입력해주세요 (코드를 받지 못했다면 스팸 메일함을 확인해주세요).')
-                await message.channel.send(f'만약 코드 재전송을 원하신다면 \'재전송\'을 입력해주세요.')
+            if "@" in content:
+                if "@khu.ac.kr" in content:
+                    await message.channel.send(f'{content}로 전송된 코드를 입력해주세요 (코드를 받지 못했다면 스팸 메일함을 확인해주세요). 만약 코드 재전송을 원하신다면 \'재전송\'을 입력해주세요. 5분이 지나면 코드는 만료됩니다. 다른 이메일을 입력하고 싶으시다면 다시 이메일을 입력해주세요.')
 
-                random_code = self.user_info.send_email(message.content, 'IIIXR LAB Discord Email Verification', 'IIIXR LAB')
-                self.user_info.set_info(name=message.author, data_type='random_code', data_content=random_code)
-                self.user_info.set_info(name=message.author, data_type='email', data_content=message.content)
+                    random_code = self.user_info.send_email(content, 'IIIXR LAB Discord Email Verification', 'IIIXR LAB')
+                    self.user_info.set_info(name=message.author, data_type='random_code', data_content=random_code)
+                    self.user_info.set_info(name=message.author, data_type='email', data_content=content)
 
-            elif "재전송" == str(message.content):
-                email = self.user_info.get_info(name=message.author, data_type='email')
-                random_code = self.user_info.send_email(email, 'IIIXR LAB Discord Email Verification', 'IIIXR LAB')
-                self.user_info.set_info(name=message.author, data_type='random_code', data_content=random_code)
+                    await asyncio.sleep(300)
 
-            elif message.content == self.user_info.get_info(name=message.author, data_type='random_code'):
-                await message.channel.send(f'Guest 역할을 지급하였습니다. 환영합니다.')
-                self.user_info.set_info(name=message.author, data_type='permission', data_content='member')
+                    if self.user_info.get_info(name=message.author, data_type='random_code') == random_code:
+                        self.user_info.set_info(name=message.author, data_type='random_code', data_content='')
+                        await message.channel.send(f'코드가 만료되었습니다.')
 
-                guild = discord.utils.get(self.guilds, name='Test')
-                role = discord.utils.get(guild.roles, name='Guest')
-                member = discord.utils.get(guild.members, name=message.author.name,
-                                           discriminator=message.author.discriminator)
+                    return
 
-                await member.add_roles(role, reason="디스코드봇 자동부여")
+                else:
+                    await message.channel.send(f'잘못된 이메일 형식입니다. 다시 이메일을 입력해주세요.')
+
+                    return
+
+            if not self.user_info.get_info(name=message.author, data_type='email') == '':
+                if "재전송" == content:
+                    email = self.user_info.get_info(name=message.author, data_type='email')
+                    random_code = self.user_info.send_email(email, 'IIIXR LAB Discord Email Verification', 'IIIXR LAB')
+                    self.user_info.set_info(name=message.author, data_type='random_code', data_content=random_code)
+
+                    await message.channel.send(f'{email}로 전송된 코드를 입력해주세요 (코드를 받지 못했다면 스팸 메일함을 확인해주세요). 만약 코드 재전송을 원하신다면 \'재전송\'을 입력해주세요. 5분이 지나면 코드는 만료됩니다. 다른 이메일을 입력하고 싶으시다면 다시 이메일을 입력해주세요.')
+
+                    await asyncio.sleep(300)
+
+                    if self.user_info.get_info(name=message.author, data_type='random_code') == random_code:
+                        self.user_info.set_info(name=message.author, data_type='random_code', data_content='')
+                        await message.channel.send(f'코드가 만료되었습니다.')
+
+                    return
+
+            if not self.user_info.get_info(name=message.author, data_type='random_code') == '':
+                print(self.user_info.get_info(name=message.author, data_type='random_code'))
+                if content == self.user_info.get_info(name=message.author, data_type='random_code'):
+                    await message.channel.send(f'Guest 역할을 지급하였습니다. 환영합니다.')
+                    self.user_info.set_info(name=message.author, data_type='permission', data_content='member')
+
+                    guild = discord.utils.get(self.guilds, name='Test')
+                    role = discord.utils.get(guild.roles, name='Guest')
+                    member = discord.utils.get(guild.members, name=message.author.name,
+                                               discriminator=message.author.discriminator)
+
+                    await member.add_roles(role, reason="디스코드봇 자동부여")
+
+                    return
+
+                else:
+                    await message.channel.send(f'잘못된 코드입니다. 다시 입력해주세요. 만약 코드 재전송을 원하신다면 \'재전송\'을 입력해주세요. 5분이 지나면 코드는 만료됩니다.')

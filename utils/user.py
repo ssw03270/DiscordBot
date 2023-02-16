@@ -34,8 +34,8 @@ class UserInfo():
 
     def get_info(self, name, data_type):
         length = len(self.DB.loc[self.DB['name'] == str(name), data_type].values)
-        if length == 0:
-            return ''
+        if length == 0 or str(self.DB.loc[self.DB['name'] == str(name), data_type].values[0]) == '':
+            return str('')
         else:
             return str(self.DB.loc[self.DB['name'] == str(name), data_type].values[0])
 
