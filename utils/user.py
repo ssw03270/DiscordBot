@@ -10,7 +10,7 @@ class UserInfo():
 
     def set_DB(self):
         try:
-            self.DB = pd.read_csv('./utils/db.csv', low_memory=False, index_col = 0)
+            self.DB = pd.read_csv('./utils/db.csv', low_memory=False, index_col = 0, dtype=str)
         except:
             self.DB = pd.DataFrame(columns=['name', 'email', 'random_code', 'permission'])
             self.DB.to_csv('./utils/db.csv')
@@ -18,6 +18,7 @@ class UserInfo():
         return self.DB
 
     def join(self, name):
+        name = str(name)
         temp = pd.DataFrame({'name': [name], 'email': [''], 'random_code': [''], 'permission': ['guest']})
         self.DB = pd.concat([self.DB, temp], ignore_index=True)
         self.DB.to_csv('./utils/db.csv')
@@ -28,7 +29,7 @@ class UserInfo():
         self.DB.to_csv('./utils/db.csv')
 
     def set_info(self, name, data_type, data_content):
-        self.DB.loc[self.DB['name'] == str(name), data_type] = data_content
+        self.DB.loc[self.DB['name'] == str(name), data_type] = str(data_content)
         self.DB.to_csv('./utils/db.csv')
 
     def get_info(self, name, data_type):
@@ -36,7 +37,7 @@ class UserInfo():
         if length == 0:
             return ''
         else:
-            return self.DB.loc[self.DB['name'] == str(name), data_type].values[0]
+            return str(self.DB.loc[self.DB['name'] == str(name), data_type].values[0])
 
     def send_email(self, target, title, name):
         smtp_gmail = smtplib.SMTP('smtp.gmail.com', 587)
@@ -63,7 +64,7 @@ class UserInfo():
         msg['To'] = target
 
         smtp_gmail.send_message(msg)
-        return code
+        return str(code)
 
     def make_random_code(self):
         _LENGTH = 6  # 몇자리?

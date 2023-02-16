@@ -35,6 +35,19 @@ class UserBot(discord.Client):
             await asyncio.sleep(86400)
 
     async def on_ready(self):
+        guild = discord.utils.get(self.guilds, name='Test')
+        for member in guild.members:
+            if member == self.user or 'bot' in str(member):
+                continue
+
+            if self.user_info.get_info(name=member, data_type='random_code') == '':
+                name = discord.utils.get(guild.members, name=member.name)
+                await member.send(
+                    f'{name.mention} 안녕하세요! 경희대학교 소프트웨어융합학과 IIIXR LAB의 공식 채널입니다. 채널에 참여하길 원하신다면, 저에게 구성원 인증을 위한 경희대 이메일을 입력해주세요. (<userid>@khu.ac.kr)')
+
+                # user name을 DB에 추가
+                self.user_info.join(name=member)
+
         print(f'{self.user.name} is ready')
         self.loop.create_task(self.status_task())
 
@@ -63,12 +76,12 @@ class UserBot(discord.Client):
                 self.user_info.set_info(name=message.author, data_type='random_code', data_content=random_code)
                 self.user_info.set_info(name=message.author, data_type='email', data_content=message.content)
 
-            if "재전송" == str(message.content):
+            elif "재전송" == str(message.content):
                 email = self.user_info.get_info(name=message.author, data_type='email')
                 random_code = self.user_info.send_email(email, 'IIIXR LAB Discord Email Verification', 'IIIXR LAB')
                 self.user_info.set_info(name=message.author, data_type='random_code', data_content=random_code)
 
-            if int(message.content) == int(self.user_info.get_info(name=message.author, data_type='random_code')):
+            elif message.content == self.user_info.get_info(name=message.author, data_type='random_code'):
                 await message.channel.send(f'Guest 역할을 지급하였습니다. 환영합니다.')
                 self.user_info.set_info(name=message.author, data_type='permission', data_content='member')
 
